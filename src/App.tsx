@@ -24,6 +24,10 @@ function getRoomTool(state): RoomTool {
     return _.find(state.tools, {key: 'roomTool'});
 }
 
+function isQuestEngineArea(area: AreaDefinition): area is QuestEngineAreaDefinition {
+    return !!(area as QuestEngineAreaDefinition).rooms;
+}
+
 const initialState: AppState = {
     area: questEngineTemplate,
     selectedLayer: 'floor',
@@ -65,15 +69,6 @@ const initialState: AppState = {
             }
         },
         {
-            key: 'wallBrush',
-            start(state: AppState, action): AppState {
-                return paintWall(state, action);
-            },
-            move(state: AppState, action): AppState {
-                return paintWall(state, action);
-            }
-        },
-        {
             key: 'tileBrush',
             start(state: AppState, action): AppState {
                 return paintGridTile(state, action);
@@ -82,41 +77,53 @@ const initialState: AppState = {
                 return paintGridTile(state, action);
             }
         },
-        {
-            key: 'roomTool',
-            sx: null,
-            sy: null,
-            ex: null,
-            ey: null,
-            start(state: AppState, action): AppState {
-                const {x, y} = areaCoordsToSelectedLayerCoords(state, action);
-                return updateTool(state, this.key, {sx: x, sy: y, ex: x, ey: y});
-            },
-            move(state: AppState, action): AppState {
-                const {x, y} = areaCoordsToSelectedLayerCoords(state, action);
-                return updateTool(state, this.key, {ex: x, ey: y});
-            },
-            stop(state: AppState, action): AppState {
-                let area = state.area as QuestEngineAreaDefinition;
-                const room = makeRoom(`room${area.rooms.length}`, getRoomTool(state));
-                let newState = state;
-                if (room) {
-                    const newLayer = applyRoomToLayer(getSelectedLayer(state), room);
-                    newState = updateLayer(state, state.selectedLayer, newLayer);
-                }
-                area = newState.area as QuestEngineAreaDefinition;
-                newState = {
-                    ...newState,
-                    area: {
-                        ...area,
-                        rooms: [...area.rooms, room],
-                    },
-                };
-                return updateTool(newState, this.key, {sx: null, sy: null, ex: null, ey: null});
-            },
-        },
     ],
     selectedTool: 'mover',
+}
+
+if (isQuestEngineArea(initialState.area)) {
+    initialState.tools.push({
+        key: 'wallBrush',
+        start(state: AppState, action): AppState {
+            return paintWall(state, action);
+        },
+        move(state: AppState, action): AppState {
+            return paintWall(state, action);
+        }
+    });
+    initialState.tools.push({
+        key: 'roomTool',
+        sx: null,
+        sy: null,
+        ex: null,
+        ey: null,
+        start(state: AppState, action): AppState {
+            const {x, y} = areaCoordsToSelectedLayerCoords(state, action);
+            return updateTool(state, this.key, {sx: x, sy: y, ex: x, ey: y});
+        },
+        move(state: AppState, action): AppState {
+            const {x, y} = areaCoordsToSelectedLayerCoords(state, action);
+            return updateTool(state, this.key, {ex: x, ey: y});
+        },
+        stop(state: AppState, action): AppState {
+            let area = state.area as QuestEngineAreaDefinition;
+            const room = makeRoom(`room${area.rooms.length}`, getRoomTool(state));
+            let newState = state;
+            if (room) {
+                const newLayer = applyRoomToLayer(getSelectedLayer(state), room);
+                newState = updateLayer(state, state.selectedLayer, newLayer);
+            }
+            area = newState.area as QuestEngineAreaDefinition;
+            newState = {
+                ...newState,
+                area: {
+                    ...area,
+                    rooms: [...area.rooms, room],
+                },
+            };
+            return updateTool(newState, this.key, {sx: null, sy: null, ex: null, ey: null});
+        },
+    });
 }
 
 function makeRoom(key: string, {sx, sy, ex, ey}): Room {
@@ -371,7 +378,7 @@ const App = React.memo((): JSX.Element => {
     const contentMap = {
         area: React.useMemo(() => (<Area
             areaDefinition={state.area}
-            drawingRoom={makeRoom('newRoom', roomTool)}
+            drawingRoom={roomTool && makeRoom('newRoom', roomTool)}
             selectedLayer={state.selectedLayer}
             dispatch={dispatch}
             scale={SCALE}

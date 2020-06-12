@@ -8,8 +8,6 @@ interface PanelProps {
     y: number,
     w: number,
     h: number,
-    //initialX?: number,
-    //initialY?: number,
 }
 
 const Panel = React.memo(({

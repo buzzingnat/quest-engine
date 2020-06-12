@@ -3,11 +3,13 @@ import { palettes, sideWallFrame, topWallFrame } from 'content/palettes';
 import { AreaDefinition, QuestEngineAreaDefinition } from 'types';
 
 
-export const ADVENTURE_WIDTH = 320;
-export const ADVENTURE_HEIGHT = 180;
+const ADVENTURE_WIDTH = 320;
+const ADVENTURE_HEIGHT = 180;
+
+const ttWidth = 2 * ADVENTURE_WIDTH;
 
 export const treasureTycoonTemplate: AreaDefinition = {
-    w: 2 * ADVENTURE_WIDTH,
+    w: ttWidth,
     h: ADVENTURE_HEIGHT,
     layers: [
         {
@@ -15,7 +17,7 @@ export const treasureTycoonTemplate: AreaDefinition = {
             y: 84,
             grid: {
                 palette: palettes.guildFloor,
-                w: 10,
+                w: Math.ceil(ttWidth / palettes.guildFloor.w),
                 h: 3,
                 tiles: [],
             }
@@ -24,17 +26,17 @@ export const treasureTycoonTemplate: AreaDefinition = {
             key: 'wall',
             grid: {
                 palette: palettes.guildWall,
-                w: 5,
+                w: Math.ceil(ttWidth / palettes.guildWall.w),
                 h: 1,
                 tiles: [],
             }
         },
         {
             key: 'south',
-            y: 100,
+            y: 116,
             grid: {
                 palette: palettes.guildNorthSouth,
-                w: 5,
+                w: Math.ceil(ttWidth / palettes.guildNorthSouth.w),
                 h: 1,
                 tiles: [],
             }

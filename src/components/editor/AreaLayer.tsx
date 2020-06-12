@@ -63,22 +63,12 @@ const GridCanvas = React.memo(({grid, isSelected}: GridCanvasProps) => {
                     drawFrame(context, frame, {x: x * w, y: y * h, w, h});
                 } else {
                     context.save();
-                        //context.fillStyle = (x + y) % 2 ? 'white' : 'black';
                         context.fillStyle = 'white';
                         context.globalAlpha = isSelected ? 0.5 : 0.2;
                         context.fillRect(x * w, y * h, w, 1);
                         context.fillRect(x * w, y * h, 1, h);
                         context.fillRect(x * w, y * h + h -1, w, 1);
                         context.fillRect(x * w + w -1, y * h, 1, h);
-                       /* context.beginPath();
-                        for (let x = 0; x <= grid.w; x++) {
-                            context.rect(x * grid.palette.w - 1, 0, 2, height);
-                        }
-                        for (let y = 0; y <= grid.h; y++) {
-                            context.rect(0, y * grid.palette.h - 1, width, 2);
-                        }
-                        context.fill();*/
-
                     context.restore();
                 }
             }
