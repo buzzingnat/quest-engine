@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
+<<<<<<< HEAD
 
 import 'App.css';
 import Area from 'components/editor/Area';
