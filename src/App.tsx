@@ -328,7 +328,7 @@ function reducer(state: AppState, action): AppState {
 
 function getDefaultGrid(): TileGrid {
     return {
-        w: 20, h: 20, tiles: [], palette: palettes.guildFloor
+        w: 20, h: 20, tiles: [], palette: palettes.allFloor,
     };
 }
 
