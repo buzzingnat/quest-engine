@@ -69,10 +69,6 @@ export interface TileGrid {
 }
 
 export interface WallGrid {
-    w: number,
-    h: number,
-    tileWidth: number,
-    tileHeight: number,
     topWallFrame: Frame,
     topWalls: boolean[][],
     leftWallFrame: Frame,

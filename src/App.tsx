@@ -187,7 +187,7 @@ function paintGridTile(state: AppState, action) {
 }
 function paintWall(state: AppState, action) {
     const layer = getSelectedLayer(state);
-    if (!layer.wallGrid) {
+    if (!layer.grid || !layer.wallGrid) {
         return state;
     }
     const value = action.mouseButtonDown === 0;
@@ -196,10 +196,10 @@ function paintWall(state: AppState, action) {
     const thickness = 16;
     x += thickness / 2;
     y += thickness / 2;
-    const overTop = (y % layer.wallGrid.tileHeight < thickness);
-    const overSide = (x % layer.wallGrid.tileWidth < thickness);
-    x = Math.floor(x / layer.wallGrid.tileWidth);
-    y = Math.floor(y / layer.wallGrid.tileHeight);
+    const overTop = (y % layer.grid.palette.h < thickness);
+    const overSide = (x % layer.grid.palette.w < thickness);
+    x = Math.floor(x / layer.grid.palette.w);
+    y = Math.floor(y / layer.grid.palette.h);
     if (overTop && !overSide) {
         const topWalls = [...layer.wallGrid.topWalls];
         topWalls[y] = [...(topWalls[y] || [])];

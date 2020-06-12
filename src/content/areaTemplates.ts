@@ -54,15 +54,11 @@ export const questEngineTemplate: QuestEngineAreaDefinition = {
             y: 18,
             grid: {
                 palette: palettes.allFloor,
-                w: 30,
-                h: 20,
+                w: 26,
+                h: 19,
                 tiles: [],
             },
             wallGrid: {
-                w: 30,
-                h: 20,
-                tileWidth: 32,
-                tileHeight: 32,
                 topWallFrame: topWallFrame,
                 topWalls: [],
                 leftWallFrame: sideWallFrame,
