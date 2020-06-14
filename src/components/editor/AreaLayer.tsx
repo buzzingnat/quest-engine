@@ -3,7 +3,7 @@ import React from 'react';
 import { drawFrame } from 'utils/animations';
 import { applyRoomToLayer } from 'utils/editor';
 
-import { Frame, LayerDefinition, Room, TileGrid, WallGrid } from 'types';
+import { Frame, LayerDefinition, Room, RoomGrid, TileGrid, WallGrid } from 'types';
 
 interface AreaLayerProps {
     dispatch: React.Dispatch<any>,
@@ -11,31 +11,46 @@ interface AreaLayerProps {
     isSelected: boolean,
     layerDefinition: LayerDefinition,
     scale: number,
+    selectedRoom: Room,
 }
 
-const AreaLayer = React.memo(({dispatch, drawingRoom, isSelected, layerDefinition, scale}: AreaLayerProps) => {
+const AreaLayer = React.memo(({dispatch, drawingRoom, isSelected, layerDefinition, scale, selectedRoom}: AreaLayerProps) => {
     let definition = layerDefinition;
     if (isSelected && layerDefinition.grid && layerDefinition.wallGrid && drawingRoom) {
         definition = applyRoomToLayer(layerDefinition, drawingRoom);
     }
     const {grid, wallGrid} = definition;
+    const palette = grid?.palette;
     return (
         <div
             style={{
                 position: 'absolute', left: `${layerDefinition.x}px`, top: `${layerDefinition.y}px`,
             }}
         >
-            {grid && <GridCanvas grid={grid} isSelected={isSelected} />}
-            {grid && wallGrid && <SortedCanvas grid={grid} wallGrid={wallGrid} isSelected={isSelected} />}
+            {grid && <GridCanvas grid={grid} roomGrid={definition.roomGrid} isSelected={isSelected} />}
+            {grid && wallGrid && <SortedCanvas
+                grid={grid}
+                roomGrid={definition.roomGrid}
+                wallGrid={wallGrid}
+                isSelected={isSelected}
+            />}
+            {palette && selectedRoom && <div style={{
+                position: 'absolute',
+                backgroundColor: 'rgba(255,255,255,0.5)',
+                left: `${selectedRoom.x * palette.w}px`, top: `${selectedRoom.y * palette.h}px`,
+                width: `${selectedRoom.w * palette.w}px`, height: `${selectedRoom.h * palette.h}px`,
+            }}>
+            </div>}
         </div>
     );
 });
 
 interface GridCanvasProps {
     grid: TileGrid,
+    roomGrid?: RoomGrid,
     isSelected: boolean,
 }
-const GridCanvas = React.memo(({grid, isSelected}: GridCanvasProps) => {
+const GridCanvas = React.memo(({grid, roomGrid, isSelected}: GridCanvasProps) => {
 
     const canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef();
     const width = grid.palette.w * grid.w;
@@ -55,7 +70,14 @@ const GridCanvas = React.memo(({grid, isSelected}: GridCanvasProps) => {
         };
         for (let y = 0; y < grid.h; y++) {
             for (let x = 0; x < grid.w; x++) {
-                if (grid.tiles[y]?.[x]) {
+                if (roomGrid?.tiles?.[y]?.[x]) {
+                    const frame: Frame = {
+                        ...baseTile,
+                        x: roomGrid.tiles[y][x].x * grid.palette.w,
+                        y: roomGrid.tiles[y][x].y * grid.palette.h,
+                    };
+                    drawFrame(context, frame, {x: x * w, y: y * h, w, h});
+                } else if (grid.tiles[y]?.[x]) {
                     const frame: Frame = {
                         ...baseTile,
                         x: grid.tiles[y][x].x * grid.palette.w,
@@ -83,10 +105,11 @@ const GridCanvas = React.memo(({grid, isSelected}: GridCanvasProps) => {
 
 interface SortedCanvasProps {
     grid: TileGrid,
+    roomGrid?: RoomGrid,
     wallGrid: WallGrid,
     isSelected: boolean,
 }
-const SortedCanvas = React.memo(({grid, wallGrid, isSelected}: SortedCanvasProps) => {
+const SortedCanvas = React.memo(({grid, roomGrid, wallGrid, isSelected}: SortedCanvasProps) => {
     const canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef();
     const width = grid.w * grid.palette.w + 4;
     const height = grid.h * grid.palette.h + 20;
@@ -102,7 +125,13 @@ const SortedCanvas = React.memo(({grid, wallGrid, isSelected}: SortedCanvasProps
         const h = grid.palette.h;
         for (let y = 0; y <= grid.h; y++) {
             for (let x = 0; x <= grid.w; x++) {
-                if (wallGrid.topWalls[y]?.[x]) {
+                if (roomGrid?.topWalls[y]?.[x] === true) {
+                    drawFrame(context, wallGrid.topWallFrame, {
+                        x: x * w, y: y * h,
+                        w: wallGrid.topWallFrame.w,
+                        h: wallGrid.topWallFrame.h,
+                    });
+                } else if (roomGrid?.topWalls[y]?.[x] !== false && wallGrid.topWalls[y]?.[x]) {
                     drawFrame(context, wallGrid.topWallFrame, {
                         x: x * w, y: y * h,
                         w: wallGrid.topWallFrame.w,
@@ -111,7 +140,13 @@ const SortedCanvas = React.memo(({grid, wallGrid, isSelected}: SortedCanvasProps
                 }
             }
             for (let x = 0; x <= grid.w; x++) {
-                if (wallGrid.leftWalls[y]?.[x]) {
+                if (roomGrid?.leftWalls[y]?.[x] === true) {
+                    drawFrame(context, wallGrid.leftWallFrame, {
+                        x: x * w, y: y * h,
+                        w: wallGrid.leftWallFrame.w,
+                        h: wallGrid.leftWallFrame.h,
+                    });
+                } else if (roomGrid?.leftWalls[y]?.[x] !== false && wallGrid.leftWalls[y]?.[x]) {
                     drawFrame(context, wallGrid.leftWallFrame, {
                         x: x * w, y: y * h,
                         w: wallGrid.leftWallFrame.w,

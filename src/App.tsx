@@ -10,23 +10,24 @@ import Panel from 'components/Panel';
 import { treasureTycoonTemplate, questEngineTemplate } from 'content/areaTemplates';
 import { combinePalettes, palettes } from 'content/palettes';
 import { waitForAllImagesToLoad } from 'utils/animations';
-import { applyRoomToLayer } from 'utils/editor';
+import { applyRoomToLayer, isQuestEngineArea } from 'utils/editor';
 
 import {
     AppState, AreaDefinition, LayerDefinition,
     QuestEngineAreaDefinition,
-    Room, RoomTool, Tile, TileGrid
+    Room, RoomTool, SelectionTool, Tile, TileGrid
 } from 'types';
 
 export const SCALE = 1;
 
-function getRoomTool(state): RoomTool {
-    return _.find(state.tools, {key: 'roomTool'});
+function getRoomTool(state: AppState): RoomTool {
+    return _.find(state.tools, {key: 'roomTool'}) as RoomTool;
 }
 
-function isQuestEngineArea(area: AreaDefinition): area is QuestEngineAreaDefinition {
-    return !!(area as QuestEngineAreaDefinition).rooms;
+function getSelectionTool(state: AppState): SelectionTool {
+    return _.find(state.tools, {key: 'selectionTool'}) as SelectionTool;
 }
+
 
 const initialState: AppState = {
     area: questEngineTemplate,
@@ -77,6 +78,24 @@ const initialState: AppState = {
                 return paintGridTile(state, action);
             }
         },
+        {
+            key: 'selectionTool',
+            selection: null,
+            start(state: AppState, action): AppState {
+                const {x, y} = areaCoordsToSelectedLayerCoords(state, action);
+                if (isQuestEngineArea(state.area)){
+                    //find selected room
+                    for (const room of state.area.rooms.slice().reverse()) {
+                        if (x >= room.x && x < (room.x + room.w))
+                            if(y >= room.y && y < (room.y + room.h)){
+                                return updateTool(state, this.key, {selection: {type: 'room', key: room.key}});
+                            }
+                    }
+                }
+                return updateTool(state, this.key, {selection: null});
+            },
+        },
+
     ],
     selectedTool: 'mover',
 }
@@ -107,7 +126,7 @@ if (isQuestEngineArea(initialState.area)) {
         },
         stop(state: AppState, action): AppState {
             let area = state.area as QuestEngineAreaDefinition;
-            const room = makeRoom(`room${area.rooms.length}`, getRoomTool(state));
+            const room = makeRoom(`room${nextRoomId++}`, getRoomTool(state));
             let newState = state;
             if (room) {
                 const newLayer = applyRoomToLayer(getSelectedLayer(state), room);
@@ -185,6 +204,7 @@ function paintGridTile(state: AppState, action) {
         },
     });
 }
+
 function paintWall(state: AppState, action) {
     const layer = getSelectedLayer(state);
     if (!layer.grid || !layer.wallGrid) {
@@ -234,7 +254,29 @@ function selectedTool(state: AppState) {
     return _.find(state.tools, {key: state.selectedTool});
 }
 
+const KEY = {
+    BACKSPACE: 8,
+    DELETE: 46,
+}
+
+function refreshRoomGrid(state) {
+    let layer: LayerDefinition = {
+        ...getSelectedLayer(state),
+        roomGrid: {
+            tiles: [],
+            leftWalls: [],
+            topWalls: [],
+        },
+    };
+    for (const room of (state.area as QuestEngineAreaDefinition).rooms)
+        layer = applyRoomToLayer(layer, room);
+    return updateLayer(state, state.selectedLayer, layer);
+}
+
+let nextRoomId = 0;
+
 function reducer(state: AppState, action): AppState {
+
     //console.log(action);
     switch (action.type) {
         case 'startDrag':
@@ -250,6 +292,22 @@ function reducer(state: AppState, action): AppState {
                 ...state,
                 dragKey: null, dragX: null, dragY: null,
             };
+        case 'keyDown': {
+            const selection = getSelectionTool(state).selection;
+            //console.log(action.which);
+            if (action.which === KEY.BACKSPACE || action.which === KEY.DELETE )
+                if (selection?.type === 'room' && isQuestEngineArea(state.area)) {
+                    const rooms = state.area.rooms.filter(room => room.key !== selection.key);
+                    return refreshRoomGrid({
+                        ...state,
+                        area: {
+                            ...state.area,
+                            rooms,
+                        },
+                    });
+                }
+            return state;
+        }
         case 'toolStart': {
             const tool = selectedTool(state);
             if (!tool.start) {
@@ -335,13 +393,19 @@ function getDefaultGrid(): TileGrid {
 function getSelectedLayer(state: AppState): LayerDefinition {
     return _.find(state.area.layers, {key: state.selectedLayer});
 }
-
+function hasUpdatedProps(original: object, props: object): boolean {
+    for (let key in props) {
+        if (props[key] !== original[key]) {
+            return true
+        }
+    }
+    return false;
+}
 function updateLayer(state: AppState, key: string, updatedProps: Partial<LayerDefinition>): AppState {
     const layer = _.find(state.area.layers, {key});
     // If updated props match the current layer, it will be found and we can skip updating state.
-    if (_.find([layer], updatedProps)) {
+    if (!hasUpdatedProps(layer, updatedProps))
         return state;
-    }
     return {
         ...state,
         area: {
@@ -365,24 +429,33 @@ const App = React.memo((): JSX.Element => {
         function onMouseUp(event) {
             dispatch({type: 'mouseUp'});
         }
+        function onKeyDown(event: KeyboardEvent) {
+            dispatch({type: 'keyDown',
+                which: event.which,
+            });
+        }
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
+        document.addEventListener("keydown", onKeyDown);
         return () => {
             document.removeEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
+            document.removeEventListener("mouseup", onMouseUp);
+            document.removeEventListener("keydown", onKeyDown);
         };
     }, []);
 
     const roomTool = getRoomTool(state);
+    const selectionTool = getSelectionTool(state);
     const layer = _.find(state.area.layers, {key: state.selectedLayer});
     const contentMap = {
         area: React.useMemo(() => (<Area
             areaDefinition={state.area}
+            selection={selectionTool.selection}
             drawingRoom={roomTool && makeRoom('newRoom', roomTool)}
             selectedLayer={state.selectedLayer}
             dispatch={dispatch}
             scale={SCALE}
-        />), [state.area, state.selectedLayer, roomTool]),
+        />), [state.area, state.selectedLayer, roomTool, selectionTool]),
         layers: React.useMemo(() => (<LayerList
             dispatch={dispatch}
             layers={state.area.layers}

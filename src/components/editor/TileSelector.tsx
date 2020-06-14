@@ -34,7 +34,7 @@ const TileSelector = React.memo(({dispatch, palette}: TileSelectorProps) => {
 
         return () => {
             document.removeEventListener("mousemove", selectTile);
-            document.addEventListener("mouseup", onMouseUp);
+            document.removeEventListener("mouseup", onMouseUp);
         };
     }, [selecting, selectTile]);
 

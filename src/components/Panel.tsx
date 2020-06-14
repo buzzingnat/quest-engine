@@ -43,7 +43,7 @@ const Panel = React.memo(({
 
         return () => {
             document.removeEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
+            document.removeEventListener("mouseup", onMouseUp);
         };
     }, [containerRef, isResizing, width, height]);
 

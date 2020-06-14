@@ -75,10 +75,17 @@ export interface WallGrid {
     leftWalls: boolean[][],
 }
 
+export interface RoomGrid {
+    tiles: Tile[][],
+    topWalls: boolean[][],
+    leftWalls: boolean[][],
+}
+
 export interface LayerDefinition {
     // Unique identifier for this layer.
     key: string,
     grid?: TileGrid,
+    roomGrid?: RoomGrid,
     wallGrid?: WallGrid,
     // Coordinates for the layer origin, if not (0, 0).
     x?: number,
@@ -150,5 +157,15 @@ export interface RoomTool extends BaseTool {
     ex: number,
     ey: number,
 }
-export type Tool = BaseTool | MoverTool | RoomTool;
+
+export interface Selection {
+    type: 'room' | 'furniture',
+    key: string,
+}
+
+export interface SelectionTool extends BaseTool {
+    // The initial position the room is drawn from.
+    selection: Selection,
+}
+export type Tool = BaseTool | MoverTool | RoomTool | SelectionTool;
 

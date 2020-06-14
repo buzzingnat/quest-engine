@@ -1,8 +1,10 @@
+import _ from 'lodash';
 import React from 'react';
 
 import AreaLayer from 'components/editor/AreaLayer';
+import { isQuestEngineArea } from 'utils/editor';
 
-import { AreaDefinition, Room } from 'types';
+import { AreaDefinition, Room, Selection } from 'types';
 
 interface AreaProps {
     areaDefinition: AreaDefinition,
@@ -10,9 +12,10 @@ interface AreaProps {
     drawingRoom: Room,
     scale: number,
     selectedLayer: string,
+    selection: Selection,
 }
 
-const Area = React.memo(({areaDefinition, dispatch, drawingRoom, scale, selectedLayer}: AreaProps) => {
+const Area = React.memo(({areaDefinition, dispatch, drawingRoom, scale, selectedLayer, selection}: AreaProps) => {
     const { layers } = areaDefinition;
 
     const [mouseButtonDown, setMouseButtonDown] = React.useState(-1);
@@ -51,9 +54,17 @@ const Area = React.memo(({areaDefinition, dispatch, drawingRoom, scale, selected
 
         return () => {
             document.removeEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
+            document.removeEventListener("mouseup", onMouseUp);
         };
     }, [sendEvent, areaDefinition, mouseButtonDown]);
+
+
+
+    let selectedRoom: Room = null;
+    if (selection?.type === 'room' && isQuestEngineArea(areaDefinition)) {
+        selectedRoom = _.find(areaDefinition.rooms, {key: selection.key});
+    }
+
 
     return (
         <div
@@ -88,6 +99,7 @@ const Area = React.memo(({areaDefinition, dispatch, drawingRoom, scale, selected
                         isSelected={layer.key === selectedLayer}
                         layerDefinition={layer}
                         scale={scale}
+                        selectedRoom={selectedRoom}
                     />
                 )
             )}

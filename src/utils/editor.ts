@@ -1,31 +1,40 @@
 import _ from 'lodash';
 
-import { LayerDefinition, Room } from 'types';
+import { AreaDefinition, LayerDefinition, QuestEngineAreaDefinition, Room, } from 'types';
 
 export function applyRoomToLayer(layer: LayerDefinition, room: Room): LayerDefinition {
-    const grid = _.cloneDeep(layer.grid);
-    const wallGrid = _.cloneDeep(layer.wallGrid);
+    const tiles = _.cloneDeep(layer.roomGrid.tiles);
+    const leftWalls = _.cloneDeep(layer.roomGrid.leftWalls);
+    const topWalls = _.cloneDeep(layer.roomGrid.topWalls);
     const L = room.x, R = room.x + room.w;
     const T = room.y, B = room.y + room.h;
     for (let y = T; y <= B; y++) {
-        grid.tiles[y] = grid.tiles[y] || [];
-        wallGrid.leftWalls[y] = wallGrid.leftWalls[y] || [];
-        wallGrid.topWalls[y] = wallGrid.topWalls[y] || [];
+        tiles[y] = tiles[y] || [];
+        leftWalls[y] = leftWalls[y] || [];
+        topWalls[y] = topWalls[y] || [];
         for (let x = L; x <= R; x++) {
             if (x < R && y < B) {
-                grid.tiles[y][x] = {x: 0, y: 0};
+                tiles[y][x] = {x: 0, y: 0};
             }
             if (y < B) {
-                wallGrid.leftWalls[y][x] = (x === L || x === R);
+                leftWalls[y][x] = (x === L || x === R);
             }
             if (x < R) {
-                wallGrid.topWalls[y][x] = (y === T || y === B);
+                topWalls[y][x] = (y === T || y === B);
             }
         }
     }
     return {
         ...layer,
-        grid,
-        wallGrid,
+        roomGrid: {
+            ...layer.roomGrid,
+            tiles,
+            leftWalls,
+            topWalls,
+        },
     };
+}
+
+export function isQuestEngineArea(area: AreaDefinition): area is QuestEngineAreaDefinition {
+    return !!(area as QuestEngineAreaDefinition).rooms;
 }

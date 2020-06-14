@@ -58,6 +58,11 @@ export const questEngineTemplate: QuestEngineAreaDefinition = {
                 h: 19,
                 tiles: [],
             },
+            roomGrid: {
+                tiles: [],
+                topWalls: [],
+                leftWalls: [],
+            },
             wallGrid: {
                 topWallFrame: topWallFrame,
                 topWalls: [],
