@@ -67,7 +67,7 @@ const initialState: AppState = {
                     x: Math.floor(action.x / SCALE - this.dx),
                     y: Math.floor(action.y / SCALE - this.dy),
                 });
-            }
+            },
         },
         {
             key: 'tileBrush',
@@ -81,6 +81,8 @@ const initialState: AppState = {
         {
             key: 'selectionTool',
             selection: null,
+            dx: null,
+            dy: null,
             start(state: AppState, action): AppState {
                 const {x, y} = areaCoordsToSelectedLayerCoords(state, action);
                 if (isQuestEngineArea(state.area)){
@@ -88,11 +90,33 @@ const initialState: AppState = {
                     for (const room of state.area.rooms.slice().reverse()) {
                         if (x >= room.x && x < (room.x + room.w))
                             if(y >= room.y && y < (room.y + room.h)){
-                                return updateTool(state, this.key, {selection: {type: 'room', key: room.key}});
+                                const layer = getSelectedLayer(state);
+                                return updateTool(state, this.key, {
+                                    selection: {type: 'room', key: room.key},
+                                    dx: action.x / SCALE - room.x * layer.grid.palette.w,// - layer.x,
+                                    dy: action.y / SCALE - room.y * layer.grid.palette.h,// - layer.y,
+                                });
                             }
                     }
                 }
                 return updateTool(state, this.key, {selection: null});
+            },
+            move(state: AppState, action): AppState {
+                const layer = getSelectedLayer(state);
+                const tx = Math.floor((action.x / SCALE - this.dx) / layer.grid.palette.w);
+                const ty = Math.floor((action.y / SCALE - this.dy) / layer.grid.palette.h);
+                const rooms = (state.area as QuestEngineAreaDefinition).rooms.map(room => room.key !== this.selection.key ? room : {
+                    ...room,
+                    x: Math.max(0, Math.min(layer.grid.w - room.w, tx)),
+                    y: Math.max(0, Math.min(layer.grid.h - room.h, ty)),
+                });
+                return refreshRoomGrid({
+                    ...state,
+                    area: {
+                        ...state.area,
+                        rooms,
+                    },
+                });
             },
         },
 

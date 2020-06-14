@@ -163,7 +163,7 @@ export interface Selection {
     key: string,
 }
 
-export interface SelectionTool extends BaseTool {
+export interface SelectionTool extends MoverTool {
     // The initial position the room is drawn from.
     selection: Selection,
 }
