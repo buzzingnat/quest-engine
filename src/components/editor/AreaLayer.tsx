@@ -3,7 +3,7 @@ import React from 'react';
 import { drawFrame } from 'utils/animations';
 import { applyRoomToLayer } from 'utils/editor';
 
-import { Frame, LayerDefinition, Room, RoomGrid, TileGrid, WallGrid } from 'types';
+import { DoorGrid, Frame, LayerDefinition, Room, RoomGrid, TileGrid, WallGrid } from 'types';
 
 interface AreaLayerProps {
     dispatch: React.Dispatch<any>,
@@ -19,7 +19,7 @@ const AreaLayer = React.memo(({dispatch, drawingRoom, isSelected, layerDefinitio
     if (isSelected && layerDefinition.grid && layerDefinition.wallGrid && drawingRoom) {
         definition = applyRoomToLayer(layerDefinition, drawingRoom);
     }
-    const {grid, wallGrid} = definition;
+    const {grid, wallGrid, doorGrid} = definition;
     const palette = grid?.palette;
     return (
         <div
@@ -32,6 +32,7 @@ const AreaLayer = React.memo(({dispatch, drawingRoom, isSelected, layerDefinitio
                 grid={grid}
                 roomGrid={definition.roomGrid}
                 wallGrid={wallGrid}
+                doorGrid={doorGrid}
                 isSelected={isSelected}
             />}
             {palette && selectedRoom && <div style={{
@@ -107,9 +108,10 @@ interface SortedCanvasProps {
     grid: TileGrid,
     roomGrid?: RoomGrid,
     wallGrid: WallGrid,
+    doorGrid: DoorGrid,
     isSelected: boolean,
 }
-const SortedCanvas = React.memo(({grid, roomGrid, wallGrid, isSelected}: SortedCanvasProps) => {
+const SortedCanvas = React.memo(({doorGrid, grid, roomGrid, wallGrid, isSelected}: SortedCanvasProps) => {
     const canvasRef: React.RefObject<HTMLCanvasElement> = React.createRef();
     const width = grid.w * grid.palette.w + 4;
     const height = grid.h * grid.palette.h + 20;
@@ -125,7 +127,16 @@ const SortedCanvas = React.memo(({grid, roomGrid, wallGrid, isSelected}: SortedC
         const h = grid.palette.h;
         for (let y = 0; y <= grid.h; y++) {
             for (let x = 0; x <= grid.w; x++) {
-                if (roomGrid?.topWalls[y]?.[x] === true) {
+                if (doorGrid?.topDoors[y]?.[x] === true) {
+                    context.save();
+                    context.globalAlpha = 0;
+                    drawFrame(context, doorGrid.topDoorFrame, {
+                        x: x * w, y: y * h,
+                        w: doorGrid.topDoorFrame.w,
+                        h: doorGrid.topDoorFrame.h,
+                    });
+                    context.restore();
+                } else if (roomGrid?.topWalls[y]?.[x] === true) {
                     drawFrame(context, wallGrid.topWallFrame, {
                         x: x * w, y: y * h,
                         w: wallGrid.topWallFrame.w,
@@ -140,7 +151,16 @@ const SortedCanvas = React.memo(({grid, roomGrid, wallGrid, isSelected}: SortedC
                 }
             }
             for (let x = 0; x <= grid.w; x++) {
-                if (roomGrid?.leftWalls[y]?.[x] === true) {
+                if (doorGrid?.leftDoors[y]?.[x] === true) {
+                    context.save();
+                    context.globalAlpha = 0;
+                    drawFrame(context, doorGrid.leftDoorFrame, {
+                        x: x * w, y: y * h,
+                        w: doorGrid.leftDoorFrame.w,
+                        h: doorGrid.leftDoorFrame.h,
+                    });
+                    context.restore();
+                } else if (roomGrid?.leftWalls[y]?.[x] === true) {
                     drawFrame(context, wallGrid.leftWallFrame, {
                         x: x * w, y: y * h,
                         w: wallGrid.leftWallFrame.w,

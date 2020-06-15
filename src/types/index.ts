@@ -75,6 +75,20 @@ export interface WallGrid {
     leftWalls: boolean[][],
 }
 
+export interface DoorGrid {
+    topDoorFrame: Frame,
+    topDoors: boolean[][],
+    leftDoorFrame: Frame,
+    leftDoors: boolean[][],
+}
+
+export interface Door {
+    isTop: boolean,
+    isOpen: boolean,
+    x: number,
+    y: number,
+}
+
 export interface RoomGrid {
     tiles: Tile[][],
     topWalls: boolean[][],
@@ -87,6 +101,7 @@ export interface LayerDefinition {
     grid?: TileGrid,
     roomGrid?: RoomGrid,
     wallGrid?: WallGrid,
+    doorGrid?: DoorGrid,
     // Coordinates for the layer origin, if not (0, 0).
     x?: number,
     y?: number,
@@ -95,6 +110,7 @@ export interface LayerDefinition {
 
 export interface Room extends ShortRectangle {
     key: string,
+    doors: Door[],
 }
 
 export interface BaseAreaDefinition {

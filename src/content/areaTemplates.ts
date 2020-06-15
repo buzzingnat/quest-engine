@@ -1,4 +1,4 @@
-import { palettes, sideWallFrame, topWallFrame } from 'content/palettes';
+import { palettes, leftDoorFrame, sideWallFrame, topDoorFrame, topWallFrame, } from 'content/palettes';
 
 import { AreaDefinition, QuestEngineAreaDefinition } from 'types';
 
@@ -68,6 +68,12 @@ export const questEngineTemplate: QuestEngineAreaDefinition = {
                 topWalls: [],
                 leftWallFrame: sideWallFrame,
                 leftWalls: [],
+            },
+            doorGrid: {
+                topDoorFrame,
+                topDoors: [],
+                leftDoorFrame,
+                leftDoors: [],
             },
         },
     ],

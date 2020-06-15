@@ -6,6 +6,8 @@ export function applyRoomToLayer(layer: LayerDefinition, room: Room): LayerDefin
     const tiles = _.cloneDeep(layer.roomGrid.tiles);
     const leftWalls = _.cloneDeep(layer.roomGrid.leftWalls);
     const topWalls = _.cloneDeep(layer.roomGrid.topWalls);
+    const leftDoors = _.cloneDeep(layer.doorGrid.leftDoors);
+    const topDoors = _.cloneDeep(layer.doorGrid.topDoors);
     const L = room.x, R = room.x + room.w;
     const T = room.y, B = room.y + room.h;
     for (let y = T; y <= B; y++) {
@@ -24,6 +26,11 @@ export function applyRoomToLayer(layer: LayerDefinition, room: Room): LayerDefin
             }
         }
     }
+    for (const door of room.doors) {
+        const targetGrid = door.isTop ? topDoors : leftDoors;
+        targetGrid[room.y + door.y] = targetGrid[room.y + door.y] || [];
+        targetGrid[room.y + door.y][room.x + door.x] = true;
+    }
     return {
         ...layer,
         roomGrid: {
@@ -31,6 +38,11 @@ export function applyRoomToLayer(layer: LayerDefinition, room: Room): LayerDefin
             tiles,
             leftWalls,
             topWalls,
+        },
+        doorGrid: {
+            ...layer.doorGrid,
+            leftDoors,
+            topDoors,
         },
     };
 }

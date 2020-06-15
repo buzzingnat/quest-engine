@@ -8,7 +8,7 @@ import TileSelector from 'components/editor/TileSelector';
 import ToolSelector from 'components/editor/ToolSelector';
 import Panel from 'components/Panel';
 import { treasureTycoonTemplate, questEngineTemplate } from 'content/areaTemplates';
-import { combinePalettes, palettes } from 'content/palettes';
+import { combinePalettes, leftDoorFrame, palettes, topDoorFrame } from 'content/palettes';
 import { waitForAllImagesToLoad } from 'utils/animations';
 import { applyRoomToLayer, isQuestEngineArea } from 'utils/editor';
 
@@ -49,7 +49,7 @@ const initialState: AppState = {
         },
         {
             key: 'tools',
-            x: 1000, y: 400, w: 300, h: 200,
+            x: 1000, y: 400, w: 300, h: 300,
         },
     ],
     tools: [
@@ -167,6 +167,12 @@ if (isQuestEngineArea(initialState.area)) {
             return updateTool(newState, this.key, {sx: null, sy: null, ex: null, ey: null});
         },
     });
+     initialState.tools.push({
+        key: 'doorBrush',
+        start(state: AppState, action): AppState {
+            return paintDoor(state, action);
+        },
+    });
 }
 
 function makeRoom(key: string, {sx, sy, ex, ey}): Room {
@@ -177,7 +183,7 @@ function makeRoom(key: string, {sx, sy, ex, ey}): Room {
     const w = Math.abs(sx - ex) + 1;
     const y = Math.min(sy, ey);
     const h = Math.abs(sy - ey) + 1;
-    return {key, x, y, w, h};
+    return {key, doors: [], x, y, w, h};
 }
 
 function updateTool(state: AppState, key: string, newProps): AppState {
@@ -274,6 +280,58 @@ function paintWall(state: AppState, action) {
     return state;
 }
 
+function paintDoor(state: AppState, action) {
+    const layer = getSelectedLayer(state);
+    if (!layer.grid || !layer.doorGrid) {
+        return state;
+    }
+    // Find the room under the cursor, if none, return state with no change.
+    // Check if the cursor is over the grid edge, if not return state with no change. (already done)
+    // Check if the wall is part of the room's outer wall, if not return state no change.state
+    // Create a door object (isTop set based on edge type, x/y relative to room x/y) and update the room with the new door
+    // Add a new updateRoom(state: AppState, roomKey: string, newProps: Partial<Room>): AppState function
+    const value = action.mouseButtonDown === 0;
+    let x = (action.x - SCALE * (layer.x || 0)) / SCALE;
+    let y = (action.y - SCALE * (layer.y || 0)) / SCALE;
+    const thickness = 16;
+    x += thickness / 2;
+    y += thickness / 2;
+    const overTop = (y % layer.grid.palette.h < thickness);
+    const overSide = (x % layer.grid.palette.w < thickness);
+    x = Math.floor(x / layer.grid.palette.w);
+    y = Math.floor(y / layer.grid.palette.h);
+    if (overTop && !overSide) {
+        //draw topDoors
+        const topDoors = [...layer.doorGrid.topDoors];
+        topDoors[y] = [...(topDoors[y] || [])];
+        if (topDoors[y][x] === value) {
+            return state;
+        }
+        topDoors[y][x] = value;
+        return updateLayer(state, state.selectedLayer, {
+            doorGrid: {
+                ...layer.doorGrid,
+                topDoors,
+            },
+        });
+    } else if (overSide && !overTop) {
+        //draw leftDoors
+        const leftDoors = [...layer.doorGrid.leftDoors];
+        leftDoors[y] = [...(leftDoors[y] || [])];
+        if (leftDoors[y][x] === value) {
+            return state;
+        }
+        leftDoors[y][x] = value;
+        return updateLayer(state, state.selectedLayer, {
+            doorGrid: {
+                ...layer.doorGrid,
+                leftDoors,
+            },
+        });
+    }
+    return state;
+}
+
 function selectedTool(state: AppState) {
     return _.find(state.tools, {key: state.selectedTool});
 }
@@ -291,6 +349,12 @@ function refreshRoomGrid(state) {
             leftWalls: [],
             topWalls: [],
         },
+        doorGrid:  {
+            leftDoorFrame,
+            leftDoors: [],
+            topDoorFrame,
+            topDoors: [],
+        }
     };
     for (const room of (state.area as QuestEngineAreaDefinition).rooms)
         layer = applyRoomToLayer(layer, room);

@@ -46,6 +46,9 @@ const guildNorthSouth: TilePalette = {
 export const sideWallFrame = {image: requireImage(sideWall), x: 0, y: 0, w: 4, h: 52};
 export const topWallFrame = {image: requireImage(topWall), x: 0, y: 0, w: 36, h: 20};
 
+export const leftDoorFrame = {image: requireImage(sideWall), x: 0, y: 0, w: 4, h: 52};
+export const topDoorFrame = {image: requireImage(topWall), x: 0, y: 0, w: 36, h: 20};
+
 export const palettes = {
     allFloor,
     caveFloor,
